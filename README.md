@@ -1,3 +1,3 @@
-# ConstrainedTextField
+# `DataField`
 
-A description of this package.
+A SwiftUI view that wraps a `TextField` to only accept specific data.

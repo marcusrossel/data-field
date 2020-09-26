@@ -16,17 +16,18 @@ public struct DataField<Data>: View {
     /// this property is updated with that decoded value.
     @Binding private var data: Data
     
+    /// A function that can turn strings intro values of the underlying data, if possible.
+    /// If this is not possible, `nil` should be returned.
+    private let fromText: (String) -> Data?
+    
+    /// A function that can turn values of the underlying data into string representations.
+    private let asText: (Data) -> String
+    
+    #warning("!= correct comment")
     /// An optional hook into the text field, to observe any buffer values that are not decodable
     /// into a `Data` value.
     /// If the buffer contains valid data, the wrapped value is `nil`.
-    private let invalidText: Binding<String?>?
-    
-    /// A function that can turn values of the underlying data into string representations.
-    private let display: (Data) -> String
-    
-    /// A function that can turn strings intro values of the underlying data, if possible.
-    /// If this is not possible, `nil` should be returned.
-    private let retrieve: (String) -> Data?
+    private let invalidText: ((String?) -> Void)?
     
     /// A buffer that is used to hold the text field's string during editing.
     @State private var buffer: String
@@ -42,10 +43,10 @@ public struct DataField<Data>: View {
     /// * set: observes changes to the buffer and updates the `invalidBuffer` accordingly
     private var text: Binding<String> {
         Binding(
-            get: { isEditing ? buffer : display(data) },
+            get: { isEditing ? buffer : asText(data) },
             set: {
                 buffer = $0
-                invalidText?.wrappedValue = (retrieve(buffer) == nil) ? buffer : nil
+                invalidText?(fromText(buffer) == nil ? buffer : nil)
             }
         )
     }
@@ -56,83 +57,66 @@ public struct DataField<Data>: View {
             self.isEditing = isEditing
             
             if !isEditing {
-                invalidText?.wrappedValue = nil
-                
-                if let data = retrieve(buffer) {
-                    self.data = data
-                }
+                if let data = fromText(buffer) { self.data = data }
+                invalidText?(nil)
             }
         }
     }
     
     public init?(
-        title: String,
+        _ title: String,
         data: Binding<Data>,
-        invalidText: Binding<String?>? = nil,
-        display: @escaping (Data) -> String,
-        retrieve: @escaping (String) -> Data?
+        fromText: @escaping (String) -> Data?,
+        asText: @escaping (Data) -> String,
+        invalidText: ((String?) -> Void)? = nil
     ) {
         self.title = title
         self._data = data
+        self.fromText = fromText
+        self.asText = asText
         self.invalidText = invalidText
-        self.display = display
-        self.retrieve = retrieve
         
-        _buffer = State(initialValue: display(data.wrappedValue))
+        _buffer = State(initialValue: asText(data.wrappedValue))
         
-        guard retrieve(buffer) != nil else { return nil }
+        guard fromText(buffer) != nil else { return nil }
     }
-}
-
-// MARK: - Convenience Initializers
-
-extension DataField {
     
     public init?(
         _ title: String,
         data: Binding<Data>,
-        textIsValid: Binding<Bool>? = nil,
-        display: @escaping (Data) -> String,
-        retrieve: @escaping (String) -> Data?
+        fromText: @escaping (String) -> Data?,
+        asText: @escaping (Data) -> String,
+        textIsValid: @escaping (Bool) -> Void
     ) {
-        let invalidText: Binding<String?>?
-        
-        if let textIsValid = textIsValid {
-            invalidText = Binding<String?>(
-                get: { textIsValid.wrappedValue ? nil : "" },
-                set: { buffer in textIsValid.wrappedValue = (buffer == nil) }
-            )
-        } else {
-            invalidText = nil
-        }
-        
         self.init(
-            title: title,
+            title,
             data: data,
-            invalidText: invalidText,
-            display: display,
-            retrieve: retrieve
+            fromText: fromText,
+            asText: asText,
+            invalidText: { textIsValid($0 == nil) }
         )
     }
 }
+
+// MARK: - Constrained Text Field
 
 extension DataField where Data == String {
     
     /// Creates a data field that only accepts strings that satisfy a given constraint.
     public init?(
-        title: String,
+        _ title: String,
         data: Binding<Data>,
-        invalidText: Binding<String?>? = nil,
-        constraint: @escaping (String) -> Bool
+        constraint: @escaping (String) -> Bool,
+        invalidText: ((String?) -> Void)? = nil
     ) {
         self.init(
-            title: title,
+            title,
             data: data,
-            invalidText: invalidText,
-            // The display function is trivially the identity function on the string.
-            display: { $0 },
             // The retrieving function passes the string along only if it meets the constraint.
-            retrieve: { constraint($0) ? $0 : nil }
+            fromText: { constraint($0) ? $0 : nil },
+            // The display function is trivially the identity function on the string.
+            asText: { $0 },
+            invalidText: invalidText
         )
     }
     
@@ -140,17 +124,14 @@ extension DataField where Data == String {
     public init?(
         _ title: String,
         data: Binding<Data>,
-        textIsValid: Binding<Bool>? = nil,
-        constraint: @escaping (String) -> Bool
+        constraint: @escaping (String) -> Bool,
+        textIsValid: @escaping (Bool) -> Void
     ) {
         self.init(
             title,
             data: data,
-            textIsValid: textIsValid,
-            // The display function is trivially the identity function on the string.
-            display: { $0 },
-            // The retrieving function passes the string along only if it meets the constraint.
-            retrieve: { constraint($0) ? $0 : nil }
+            constraint: constraint,
+            invalidText: { textIsValid($0 == nil) }
         )
     }
 }
@@ -168,10 +149,10 @@ struct DataField_Previews: PreviewProvider {
         var body: some View {
             VStack {
                 DataField("Plain", data: $data) {
-                    "\($0)"
-                } retrieve: {
                     guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
                     return int > 10 ? int : nil
+                } asText: {
+                    "\($0)"
                 }
             }
         }
@@ -184,11 +165,13 @@ struct DataField_Previews: PreviewProvider {
     
         var body: some View {
             VStack {
-                DataField(title: "Invalid Text", data: $data, invalidText: $invalidText) {
-                    "\($0)"
-                } retrieve: {
+                DataField("Invalid Text", data: $data) {
                     guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
                     return int > 10 ? int : nil
+                } asText: {
+                    "\($0)"
+                } invalidText: {
+                    invalidText = $0
                 }
                 
                 if let invalidText = invalidText {
@@ -206,11 +189,13 @@ struct DataField_Previews: PreviewProvider {
     
         var body: some View {
             VStack {
-                DataField("Text Is Valid", data: $data, textIsValid: $textIsValid) {
-                    "\($0)"
-                } retrieve: {
+                DataField("Text Is Valid", data: $data) {
                     guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
                     return int > 10 ? int : nil
+                } asText: {
+                    "\($0)"
+                } textIsValid: {
+                    textIsValid = $0
                 }
                 
                 if !textIsValid {
@@ -223,7 +208,7 @@ struct DataField_Previews: PreviewProvider {
     
     private struct PlainStringPreview: View {
     
-        @State private var data = "abcfed"
+        @State private var data = "abcdef"
     
         var body: some View {
             VStack {
@@ -239,8 +224,10 @@ struct DataField_Previews: PreviewProvider {
     
         var body: some View {
             VStack {
-                DataField(title: "Invalid Text String", data: $data, invalidText: $invalidText) {
+                DataField("Invalid Text String", data: $data) {
                     $0.count > 5
+                } invalidText: {
+                    invalidText = $0
                 }
                 
                 if let invalidText = invalidText {
@@ -258,8 +245,10 @@ struct DataField_Previews: PreviewProvider {
     
         var body: some View {
             VStack {
-                DataField("Text Is Valid String", data: $data, textIsValid: $textIsValid) {
+                DataField("Text Is Valid String", data: $data) {
                     $0.count > 5
+                } textIsValid: {
+                    textIsValid = $0
                 }
                 
                 if !textIsValid {
