@@ -22,7 +22,7 @@ public struct DataField<Data>: View {
     /// rather its own transient `buffer`.
     /// If editing ends in a state where `textToData` can successfully decode the `buffer` into
     /// `Data`, this property is updated with that decoded value.
-    @Binding private var data: Data
+    private var data: Binding<Data>!
     
     /// A function that can turn strings intro values of the underlying data, if possible.
     /// If this is not possible, `nil` should be returned.
@@ -51,7 +51,7 @@ public struct DataField<Data>: View {
     /// * set: observes changes to the buffer and updates the `invalidBuffer` accordingly
     private var text: Binding<String> {
         Binding(
-            get: { isEditing ? buffer : dataToText(data) },
+            get: { isEditing ? buffer : dataToText(data.wrappedValue) },
             set: {
                 buffer = $0
                 invalidText?(textToData(buffer) == nil ? buffer : nil)
@@ -65,7 +65,7 @@ public struct DataField<Data>: View {
             self.isEditing = isEditing
             
             if !isEditing {
-                if let data = textToData(buffer) { self.data = data }
+                if let data = textToData(buffer) { self.data.wrappedValue = data }
                 invalidText?(nil)
             }
         }
@@ -79,7 +79,7 @@ public struct DataField<Data>: View {
         invalidText: ((String?) -> Void)? = nil
     ) {
         self.title = title
-        self._data = data
+        self.data = data
         self.textToData = textToData
         self.dataToText = dataToText
         self.invalidText = invalidText
@@ -94,14 +94,14 @@ public struct DataField<Data>: View {
 
 extension DataField {
     
-    public init(
+    public init<Safe>(
         _ title: String,
-        initialData: Data? = nil,
-        textToData: @escaping (String) -> Data?,
-        dataToText: @escaping (Data?) -> String,
-        sink: @escaping (Data) -> Void,
+        initialData: Safe? = nil,
+        textToData: @escaping (String) -> Safe?,
+        dataToText: @escaping (Safe?) -> String,
+        sink: @escaping (Safe) -> Void,
         invalidText: ((String?) -> Void)? = nil
-    ) {
+    ) where Data == Safe? {
         self.title = title
         self.textToData = textToData
         self.dataToText = dataToText
@@ -109,9 +109,12 @@ extension DataField {
 
         _buffer = State(initialValue: dataToText(initialData))
         
-        _data = Binding<Data>(
-            get: { fatalError("Unreachable") },
-            set: { sink($0) }
+        // The only time the setter is called is when the text is with a non-optional value. So
+        // unwrapping is safe here. The optionality of the binding is only required do to the
+        // optionality of the initial data.
+        data = Binding<Safe?>(
+            get: { textToData(buffer) },
+            set: { sink($0!) }
         )
     }
 }
@@ -140,14 +143,16 @@ extension DataField where Data == String {
     
 // MARK: - Safe Constrained Text Field
 
-extension DataField where Data == String {
+extension DataField where Data == String? {
+    
+    public typealias Safe = String
     
     public init(
         _ title: String,
-        initialData: Data? = nil,
-        constraint: @escaping (Data) -> Bool,
-        dataToText: @escaping (Data?) -> String,
-        sink: @escaping (Data) -> Void,
+        initialData: Safe? = nil,
+        constraint: @escaping (Safe) -> Bool,
+        dataToText: @escaping (Safe?) -> String,
+        sink: @escaping (Safe) -> Void,
         invalidText: ((String?) -> Void)? = nil
     ) {
         self.init(
