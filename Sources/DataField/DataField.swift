@@ -8,6 +8,8 @@
 
 import SwiftUI
 
+// MARK: - Data Field
+
 public struct DataField<Data>: View {
     
     /// The title of the text view, describing its purpose.
@@ -15,19 +17,19 @@ public struct DataField<Data>: View {
     
     /// The underlying data that should *actually* be manipulated.
     /// When not being edited, the text field presents this data as a string with the help of a
-    /// given `asText` function.
+    /// given `dataToText` function.
     /// When being actively edited, the text field does not show a representation of this data, but
     /// rather its own transient `buffer`.
-    /// If editing ends in a state where `fromText` can successfully decode the `buffer` into
+    /// If editing ends in a state where `textToData` can successfully decode the `buffer` into
     /// `Data`, this property is updated with that decoded value.
     @Binding private var data: Data
     
     /// A function that can turn strings intro values of the underlying data, if possible.
     /// If this is not possible, `nil` should be returned.
-    private let fromText: (String) -> Data?
+    private let textToData: (String) -> Data?
     
     /// A function that can turn values of the underlying data into string representations.
-    private let asText: (Data) -> String
+    private let dataToText: (Data) -> String
     
     /// An optional hook into the text field, to observe any buffer values that are not decodable
     /// into a `Data` value.
@@ -49,10 +51,10 @@ public struct DataField<Data>: View {
     /// * set: observes changes to the buffer and updates the `invalidBuffer` accordingly
     private var text: Binding<String> {
         Binding(
-            get: { isEditing ? buffer : asText(data) },
+            get: { isEditing ? buffer : dataToText(data) },
             set: {
                 buffer = $0
-                invalidText?(fromText(buffer) == nil ? buffer : nil)
+                invalidText?(textToData(buffer) == nil ? buffer : nil)
             }
         )
     }
@@ -63,7 +65,7 @@ public struct DataField<Data>: View {
             self.isEditing = isEditing
             
             if !isEditing {
-                if let data = fromText(buffer) { self.data = data }
+                if let data = textToData(buffer) { self.data = data }
                 invalidText?(nil)
             }
         }
@@ -72,95 +74,90 @@ public struct DataField<Data>: View {
     public init?(
         _ title: String,
         data: Binding<Data>,
-        fromText: @escaping (String) -> Data?,
-        asText: @escaping (Data) -> String,
+        textToData: @escaping (String) -> Data?,
+        dataToText: @escaping (Data) -> String,
         invalidText: ((String?) -> Void)? = nil
     ) {
         self.title = title
         self._data = data
-        self.fromText = fromText
-        self.asText = asText
+        self.textToData = textToData
+        self.dataToText = dataToText
         self.invalidText = invalidText
         
-        _buffer = State(initialValue: asText(data.wrappedValue))
+        _buffer = State(initialValue: dataToText(data.wrappedValue))
         
-        guard fromText(buffer) != nil else { return nil }
-    }
-    
-    public init?(
-        _ title: String,
-        data: Binding<Data>,
-        fromText: @escaping (String) -> Data?,
-        asText: @escaping (Data) -> String,
-        textIsValid: @escaping (Bool) -> Void
-    ) {
-        self.init(
-            title,
-            data: data,
-            fromText: fromText,
-            asText: asText,
-            invalidText: { textIsValid($0 == nil) }
-        )
+        guard textToData(buffer) != nil else { return nil }
     }
 }
 
-// MARK: - Optional Data
+// MARK: - Safe Field
 
 extension DataField {
     
-    /*public init?(
+    public init(
         _ title: String,
-        data: Binding<Data?>,
-        fromText: @escaping (String) -> Data?,
-        asText: @escaping (Data) -> String,
+        initialData: Data? = nil,
+        textToData: @escaping (String) -> Data?,
+        dataToText: @escaping (Data?) -> String,
+        sink: @escaping (Data) -> Void,
         invalidText: ((String?) -> Void)? = nil
     ) {
         self.title = title
-        self._data = data
-        self.fromText = fromText
-        self.asText = asText
+        self.textToData = textToData
+        self.dataToText = dataToText
         self.invalidText = invalidText
+
+        _buffer = State(initialValue: dataToText(initialData))
         
-        _buffer = State(initialValue: asText(data.wrappedValue))
-        
-        guard fromText(buffer) != nil else { return nil }
-    }*/
+        _data = Binding<Data>(
+            get: { fatalError("Unreachable") },
+            set: { sink($0) }
+        )
+    }
 }
 
 // MARK: - Constrained Text Field
 
 extension DataField where Data == String {
     
-    /// Creates a data field that only accepts strings that satisfy a given constraint.
     public init?(
         _ title: String,
         data: Binding<Data>,
-        constraint: @escaping (String) -> Bool,
+        constraint: @escaping (Data) -> Bool,
         invalidText: ((String?) -> Void)? = nil
     ) {
         self.init(
             title,
             data: data,
             // The retrieving function passes the string along only if it meets the constraint.
-            fromText: { constraint($0) ? $0 : nil },
+            textToData: { constraint($0) ? $0 : nil },
             // The display function is trivially the identity function on the string.
-            asText: { $0 },
+            dataToText: { $0 },
             invalidText: invalidText
         )
     }
+}
     
-    /// Creates a data field that only accepts strings that satisfy a given constraint.
-    public init?(
+// MARK: - Safe Constrained Text Field
+
+extension DataField where Data == String {
+    
+    public init(
         _ title: String,
-        data: Binding<Data>,
-        constraint: @escaping (String) -> Bool,
-        textIsValid: @escaping (Bool) -> Void
+        initialData: Data? = nil,
+        constraint: @escaping (Data) -> Bool,
+        dataToText: @escaping (Data?) -> String,
+        sink: @escaping (Data) -> Void,
+        invalidText: ((String?) -> Void)? = nil
     ) {
         self.init(
             title,
-            data: data,
-            constraint: constraint,
-            invalidText: { textIsValid($0 == nil) }
+            initialData: initialData,
+            // The retrieving function passes the string along only if it meets the constraint.
+            textToData: { constraint($0) ? $0 : nil },
+            dataToText: dataToText,
+            sink: sink,
+            invalidText: invalidText
         )
     }
 }

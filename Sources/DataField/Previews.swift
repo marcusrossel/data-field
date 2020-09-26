@@ -19,7 +19,7 @@ struct DataField_Previews: PreviewProvider {
                 DataField("Plain", data: $data) {
                     guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
                     return int > 10 ? int : nil
-                } asText: {
+                } dataToText: {
                     "\($0)"
                 }
             }
@@ -36,7 +36,7 @@ struct DataField_Previews: PreviewProvider {
                 DataField("Invalid Text", data: $data) {
                     guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
                     return int > 10 ? int : nil
-                } asText: {
+                } dataToText: {
                     "\($0)"
                 } invalidText: {
                     invalidText = $0
@@ -50,24 +50,26 @@ struct DataField_Previews: PreviewProvider {
         }
     }
     
-    private struct TextIsValidPreview: View {
+    private struct SafeInvalidTextPreview: View {
     
-        @State private var data = 11
-        @State private var textIsValid = true
+        @State private var data: Int? = nil
+        @State private var invalidText: String?
     
         var body: some View {
             VStack {
-                DataField("Text Is Valid", data: $data) {
+                DataField("Safe Invalid Text", initialData: data) {
                     guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
                     return int > 10 ? int : nil
-                } asText: {
-                    "\($0)"
-                } textIsValid: {
-                    textIsValid = $0
+                } dataToText: {
+                    if let data = $0 { return "\(data)" } else { return "" }
+                } sink: {
+                    data = $0
+                } invalidText: {
+                    invalidText = $0
                 }
                 
-                if !textIsValid {
-                    Text("Please enter an integer greater than 10!")
+                if let invalidText = invalidText {
+                    Text("'\(invalidText)' is not an integer greater than 10!")
                         .foregroundColor(.red)
                 }
             }
@@ -80,7 +82,9 @@ struct DataField_Previews: PreviewProvider {
     
         var body: some View {
             VStack {
-                DataField("Plain String", data: $data) { $0.count > 5 }
+                DataField("Plain String", data: $data) {
+                    $0.count > 5
+                }
             }
         }
     }
@@ -106,21 +110,25 @@ struct DataField_Previews: PreviewProvider {
         }
     }
     
-    private struct TextIsValidStringPreview: View {
+    private struct SafeInvalidTextStringPreview: View {
     
-        @State private var data = "abcdef"
-        @State private var textIsValid = true
+        @State private var data: String? = nil
+        @State private var invalidText: String?
     
         var body: some View {
             VStack {
-                DataField("Text Is Valid String", data: $data) {
+                DataField("Safe Invalid Text String", initialData: data) {
                     $0.count > 5
-                } textIsValid: {
-                    textIsValid = $0
+                } dataToText: {
+                    $0 ?? ""
+                } sink: {
+                    data = $0
+                } invalidText: {
+                    invalidText = $0
                 }
                 
-                if !textIsValid {
-                    Text("Please enter a string with more than 5 characters!")
+                if let invalidText = invalidText {
+                    Text("'\(invalidText)' is not an integer greater than 10!")
                         .foregroundColor(.red)
                 }
             }
@@ -135,12 +143,12 @@ struct DataField_Previews: PreviewProvider {
                     PlainPreview()
                 }
                 HStack {
-                    Text("Text Is Valid: ")
-                    TextIsValidPreview()
-                }
-                HStack {
                     Text("Invalid Text: ")
                     InvalidTextPreview()
+                }
+                HStack {
+                    Text("Safe Invalid Text: ")
+                    SafeInvalidTextPreview()
                 }
             }
             
@@ -150,12 +158,12 @@ struct DataField_Previews: PreviewProvider {
                     PlainStringPreview()
                 }
                 HStack {
-                    Text("Text Is Valid: ")
-                    TextIsValidStringPreview()
-                }
-                HStack {
                     Text("Invalid Text: ")
                     InvalidTextStringPreview()
+                }
+                HStack {
+                    Text("Safe Invalid Text: ")
+                    SafeInvalidTextStringPreview()
                 }
             }
         }
