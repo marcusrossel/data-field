@@ -1,3 +1,9 @@
+//
+//  DataField.swift
+//
+//  Created by Marcus Rossel on 25.09.20.
+//
+
 #if canImport(SwiftUI)
 
 import SwiftUI
@@ -9,11 +15,11 @@ public struct DataField<Data>: View {
     
     /// The underlying data that should *actually* be manipulated.
     /// When not being edited, the text field presents this data as a string with the help of a
-    /// given `encode` function.
+    /// given `asText` function.
     /// When being actively edited, the text field does not show a representation of this data, but
     /// rather its own transient `buffer`.
-    /// If editing ends in a state where `decode` can successfully decode the `buffer` into `Data`,
-    /// this property is updated with that decoded value.
+    /// If editing ends in a state where `fromText` can successfully decode the `buffer` into
+    /// `Data`, this property is updated with that decoded value.
     @Binding private var data: Data
     
     /// A function that can turn strings intro values of the underlying data, if possible.
@@ -23,10 +29,10 @@ public struct DataField<Data>: View {
     /// A function that can turn values of the underlying data into string representations.
     private let asText: (Data) -> String
     
-    #warning("!= correct comment")
     /// An optional hook into the text field, to observe any buffer values that are not decodable
     /// into a `Data` value.
-    /// If the buffer contains valid data, the wrapped value is `nil`.
+    /// If the buffer contains invalid data, its text is passed.
+    /// If the buffer contains valid data, `nil` is passed.
     private let invalidText: ((String?) -> Void)?
     
     /// A buffer that is used to hold the text field's string during editing.
@@ -98,6 +104,29 @@ public struct DataField<Data>: View {
     }
 }
 
+// MARK: - Optional Data
+
+extension DataField {
+    
+    /*public init?(
+        _ title: String,
+        data: Binding<Data?>,
+        fromText: @escaping (String) -> Data?,
+        asText: @escaping (Data) -> String,
+        invalidText: ((String?) -> Void)? = nil
+    ) {
+        self.title = title
+        self._data = data
+        self.fromText = fromText
+        self.asText = asText
+        self.invalidText = invalidText
+        
+        _buffer = State(initialValue: asText(data.wrappedValue))
+        
+        guard fromText(buffer) != nil else { return nil }
+    }*/
+}
+
 // MARK: - Constrained Text Field
 
 extension DataField where Data == String {
@@ -136,164 +165,4 @@ extension DataField where Data == String {
     }
 }
 
-// MARK: - Previews
-
-#if DEBUG
-
-struct DataField_Previews: PreviewProvider {
-    
-    private struct PlainPreview: View {
-    
-        @State private var data = 11
-    
-        var body: some View {
-            VStack {
-                DataField("Plain", data: $data) {
-                    guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
-                    return int > 10 ? int : nil
-                } asText: {
-                    "\($0)"
-                }
-            }
-        }
-    }
-
-    private struct InvalidTextPreview: View {
-    
-        @State private var data = 11
-        @State private var invalidText: String?
-    
-        var body: some View {
-            VStack {
-                DataField("Invalid Text", data: $data) {
-                    guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
-                    return int > 10 ? int : nil
-                } asText: {
-                    "\($0)"
-                } invalidText: {
-                    invalidText = $0
-                }
-                
-                if let invalidText = invalidText {
-                    Text("'\(invalidText)' is not an integer greater than 10!")
-                        .foregroundColor(.red)
-                }
-            }
-        }
-    }
-    
-    private struct TextIsValidPreview: View {
-    
-        @State private var data = 11
-        @State private var textIsValid = true
-    
-        var body: some View {
-            VStack {
-                DataField("Text Is Valid", data: $data) {
-                    guard let int = Int($0.trimmingCharacters(in: .whitespaces)) else { return nil }
-                    return int > 10 ? int : nil
-                } asText: {
-                    "\($0)"
-                } textIsValid: {
-                    textIsValid = $0
-                }
-                
-                if !textIsValid {
-                    Text("Please enter an integer greater than 10!")
-                        .foregroundColor(.red)
-                }
-            }
-        }
-    }
-    
-    private struct PlainStringPreview: View {
-    
-        @State private var data = "abcdef"
-    
-        var body: some View {
-            VStack {
-                DataField("Plain String", data: $data) { $0.count > 5 }
-            }
-        }
-    }
-    
-    private struct InvalidTextStringPreview: View {
-    
-        @State private var data = "abcdef"
-        @State private var invalidText: String?
-    
-        var body: some View {
-            VStack {
-                DataField("Invalid Text String", data: $data) {
-                    $0.count > 5
-                } invalidText: {
-                    invalidText = $0
-                }
-                
-                if let invalidText = invalidText {
-                    Text("'\(invalidText)' does not have more than 5 characters!")
-                        .foregroundColor(.red)
-                }
-            }
-        }
-    }
-    
-    private struct TextIsValidStringPreview: View {
-    
-        @State private var data = "abcdef"
-        @State private var textIsValid = true
-    
-        var body: some View {
-            VStack {
-                DataField("Text Is Valid String", data: $data) {
-                    $0.count > 5
-                } textIsValid: {
-                    textIsValid = $0
-                }
-                
-                if !textIsValid {
-                    Text("Please enter a string with more than 5 characters!")
-                        .foregroundColor(.red)
-                }
-            }
-        }
-    }
-    
-    static var previews: some View {
-        Form {
-            Section(header: Text("Integers").font(.headline)) {
-                HStack {
-                    Text("Plain: ")
-                    PlainPreview()
-                }
-                HStack {
-                    Text("Text Is Valid: ")
-                    TextIsValidPreview()
-                }
-                HStack {
-                    Text("Invalid Text: ")
-                    InvalidTextPreview()
-                }
-            }
-            
-            Section(header: Text("Strings").font(.headline)) {
-                HStack {
-                    Text("Plain: ")
-                    PlainStringPreview()
-                }
-                HStack {
-                    Text("Text Is Valid: ")
-                    TextIsValidStringPreview()
-                }
-                HStack {
-                    Text("Invalid Text: ")
-                    InvalidTextStringPreview()
-                }
-            }
-        }
-        .textFieldStyle(RoundedBorderTextFieldStyle())
-    }
-}
-
-#endif /*DEBUG*/
 #endif /*canImport(SwiftUI)*/
