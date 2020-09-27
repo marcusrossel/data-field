@@ -2,8 +2,6 @@
 
 A SwiftUI view that wraps a `TextField` to only accept specific data.
 
----
-
 ## Motivation
 
 SwiftUI's native `TextField` is a great tool if you want user-editable text in your app. Often it is not sufficient for a
@@ -36,10 +34,10 @@ let package = Package(
 
 ## Usage
 
-There are two different use cases for a `DataField`:
+There are two main distinct use cases for a `DataField`:
 
-1. When you already have valid data, that you want to be editable by a user.
-2. When you do not yet have an instance of valid data, but want to retrieve one from a user.
+    1. When you already have valid data, that you want to be editable by a user.
+    2. When you do not yet have an instance of valid data, but want to retrieve one from a user.
 
 ### Editing Preexisting Data
 
@@ -171,7 +169,7 @@ field a binding to `hour`, we pass it a `sink` closure. This closure will receiv
 data field. That is, if the user ends editing with `"12"` entered, `sink` will be called with a value of `12`. If the user
 ends editing with `"hello"` entered, `sink` won't be called at all.
 
-## Safe Field
+### Safe Field
 
 Using `sink` instead of a binding is not only suited for retrieving new values, it's generally a more safe mechanism
 for data entry, since a given binding can always be overridden with invalid values from the outside. The main
@@ -214,7 +212,7 @@ struct HourView: View {
 The `initialData` parameter allows us to pass an initial value. If the value is not valid data, it won't be shown by
 the data field!
 
-## `String`-based Fields
+### `String`-based Fields
 
 `DataField` has some affordances for using `String` data. Since `dataToText` and `textToData` are redundant
 when working with `String` data, they can be replaced by a `constraint` closure, which returns a `Bool`
