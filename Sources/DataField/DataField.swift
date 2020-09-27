@@ -22,7 +22,7 @@ public struct DataField<Data>: View {
     /// rather its own transient `buffer`.
     /// If editing ends in a state where `textToData` can successfully decode the `buffer` into
     /// `Data`, this property is updated with that decoded value.
-    private var data: Binding<Data>!
+    @Binding private var data: Data
     
     /// A function that can turn strings intro values of the underlying data, if possible.
     /// If this is not possible, `nil` should be returned.
@@ -51,7 +51,7 @@ public struct DataField<Data>: View {
     /// * set: observes changes to the buffer and updates the `invalidBuffer` accordingly
     private var text: Binding<String> {
         Binding(
-            get: { isEditing ? buffer : dataToText(data.wrappedValue) },
+            get: { isEditing ? buffer : dataToText(data) },
             set: {
                 buffer = $0
                 invalidText?(textToData(buffer) == nil ? buffer : nil)
@@ -65,7 +65,7 @@ public struct DataField<Data>: View {
             self.isEditing = isEditing
             
             if !isEditing {
-                if let data = textToData(buffer) { self.data.wrappedValue = data }
+                if let data = textToData(buffer) { self.data = data }
                 invalidText?(nil)
             }
         }
@@ -79,7 +79,7 @@ public struct DataField<Data>: View {
         invalidText: ((String?) -> Void)? = nil
     ) {
         self.title = title
-        self.data = data
+        self._data = data
         self.textToData = textToData
         self.dataToText = dataToText
         self.invalidText = invalidText
@@ -92,7 +92,7 @@ public struct DataField<Data>: View {
 
 // MARK: - Safe Field
 
-extension DataField {
+/*extension DataField {
     
     public init<Safe>(
         _ title: String,
@@ -107,17 +107,17 @@ extension DataField {
         self.dataToText = dataToText
         self.invalidText = invalidText
 
-        _buffer = State(initialValue: dataToText(initialData))
+        _buffer = State(initialValue: dataToText(textToData(dataToText(initialData))))
         
         // The only time the setter is called is when the text is with a non-optional value. So
         // unwrapping is safe here. The optionality of the binding is only required do to the
         // optionality of the initial data.
-        data = Binding<Safe?>(
+        _data = Binding<Safe?>(
             get: { textToData(buffer) },
             set: { sink($0!) }
         )
     }
-}
+}*/
 
 // MARK: - Constrained Text Field
 
@@ -143,7 +143,7 @@ extension DataField where Data == String {
     
 // MARK: - Safe Constrained Text Field
 
-extension DataField where Data == String? {
+/*extension DataField where Data == String? {
     
     public typealias Safe = String
     
@@ -165,6 +165,6 @@ extension DataField where Data == String? {
             invalidText: invalidText
         )
     }
-}
+}*/
 
 #endif /*canImport(SwiftUI)*/
