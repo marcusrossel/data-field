@@ -12,63 +12,13 @@ import SwiftUI
 
 public struct DataField<Data>: View {
     
-    /// The title of the text view, describing its purpose.
-    private let title: String
+    /// Data fields come in different styles, which unfortunately seem to require seperate
+    /// implementations. This property captures the underlying view which will represent the data
+    /// field (which is chosen during initialization). 
+    private let view: AnyView
     
-    /// The underlying data that should *actually* be manipulated.
-    /// When not being edited, the text field presents this data as a string with the help of a
-    /// given `dataToText` function.
-    /// When being actively edited, the text field does not show a representation of this data, but
-    /// rather its own transient `buffer`.
-    /// If editing ends in a state where `textToData` can successfully decode the `buffer` into
-    /// `Data`, this property is updated with that decoded value.
-    @Binding private var data: Data
-    
-    /// A function that can turn strings intro values of the underlying data, if possible.
-    /// If this is not possible, `nil` should be returned.
-    private let textToData: (String) -> Data?
-    
-    /// A function that can turn values of the underlying data into string representations.
-    private let dataToText: (Data) -> String
-    
-    /// An optional hook into the text field, to observe any buffer values that are not decodable
-    /// into a `Data` value.
-    /// If the buffer contains invalid data, its text is passed.
-    /// If the buffer contains valid data, `nil` is passed.
-    private let invalidText: ((String?) -> Void)?
-    
-    /// A buffer that is used to hold the text field's string during editing.
-    @State private var buffer: String
-    
-    /// An indicator for whether the text field is currently being edited.
-    @State private var isEditing = false
-    
-    /// The binding that is given to the text field.
-    ///
-    /// This binding performs some of the important steps necessary for the behavior of the data
-    /// field:
-    /// * get: chooses whether the buffer or the underlying data should be shown by the text field
-    /// * set: observes changes to the buffer and updates the `invalidBuffer` accordingly
-    private var text: Binding<String> {
-        Binding(
-            get: { isEditing ? buffer : dataToText(data) },
-            set: {
-                buffer = $0
-                invalidText?(textToData(buffer) == nil ? buffer : nil)
-            }
-        )
-    }
-    
-    /// A data field is made up of just a single text field.
-    public var body: TextField<Text> {
-        TextField(title, text: text) { isEditing in
-            self.isEditing = isEditing
-            
-            if !isEditing {
-                if let data = textToData(buffer) { self.data = data }
-                invalidText?(nil)
-            }
-        }
+    public var body: some View {
+        view
     }
     
     public init?(
@@ -78,46 +28,21 @@ public struct DataField<Data>: View {
         dataToText: @escaping (Data) -> String,
         invalidText: ((String?) -> Void)? = nil
     ) {
-        self.title = title
-        self._data = data
-        self.textToData = textToData
-        self.dataToText = dataToText
-        self.invalidText = invalidText
+        let view = Unsafe(
+            title,
+            data: data,
+            textToData: textToData,
+            dataToText: dataToText,
+            invalidText: invalidText
+        )
         
-        _buffer = State(initialValue: dataToText(data.wrappedValue))
-        
-        guard textToData(buffer) != nil else { return nil }
+        if let view = view {
+            self.view = AnyView(view)
+        } else {
+            return nil
+        }
     }
 }
-
-// MARK: - Safe Field
-
-/*extension DataField {
-    
-    public init<Safe>(
-        _ title: String,
-        initialData: Safe? = nil,
-        textToData: @escaping (String) -> Safe?,
-        dataToText: @escaping (Safe?) -> String,
-        sink: @escaping (Safe) -> Void,
-        invalidText: ((String?) -> Void)? = nil
-    ) where Data == Safe? {
-        self.title = title
-        self.textToData = textToData
-        self.dataToText = dataToText
-        self.invalidText = invalidText
-
-        _buffer = State(initialValue: dataToText(textToData(dataToText(initialData))))
-        
-        // The only time the setter is called is when the text is with a non-optional value. So
-        // unwrapping is safe here. The optionality of the binding is only required do to the
-        // optionality of the initial data.
-        _data = Binding<Safe?>(
-            get: { textToData(buffer) },
-            set: { sink($0!) }
-        )
-    }
-}*/
 
 // MARK: - Constrained Text Field
 

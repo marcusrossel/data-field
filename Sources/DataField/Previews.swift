@@ -50,7 +50,7 @@ struct DataField_Previews: PreviewProvider {
         }
     }
     
-    /*private struct SafeInvalidTextPreview: View {
+    private struct SafeInvalidTextPreview: View {
     
         @State private var data: Int? = nil
         @State private var invalidText: String?
@@ -74,7 +74,7 @@ struct DataField_Previews: PreviewProvider {
                 }
             }
         }
-    }*/
+    }
     
     private struct PlainStringPreview: View {
     
@@ -110,7 +110,7 @@ struct DataField_Previews: PreviewProvider {
         }
     }
     
-    /*private struct SafeInvalidTextStringPreview: View {
+    private struct SafeInvalidTextStringPreview: View {
     
         @State private var data: String? = nil
         @State private var invalidText: String?
@@ -133,7 +133,7 @@ struct DataField_Previews: PreviewProvider {
                 }
             }
         }
-    }*/
+    }
     
     static var previews: some View {
         Form {
@@ -146,10 +146,10 @@ struct DataField_Previews: PreviewProvider {
                     Text("Invalid Text: ")
                     InvalidTextPreview()
                 }
-                /*HStack {
+                HStack {
                     Text("Safe Invalid Text: ")
                     SafeInvalidTextPreview()
-                }*/
+                }
             }
             
             Section(header: Text("Strings").font(.headline)) {
@@ -161,10 +161,10 @@ struct DataField_Previews: PreviewProvider {
                     Text("Invalid Text: ")
                     InvalidTextStringPreview()
                 }
-                /*HStack {
+                HStack {
                     Text("Safe Invalid Text: ")
                     SafeInvalidTextStringPreview()
-                }*/
+                }
             }
         }
         .textFieldStyle(RoundedBorderTextFieldStyle())
