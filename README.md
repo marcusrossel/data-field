@@ -35,7 +35,7 @@ let package = Package(
 ## Usage
 
 > *All of the examples below are numbered and can be viewed as* SwiftUI Previews *in the
-> repository's `Sources > Examples` directory.*
+> repository's `Examples` directory.*
 
 Let's say we wanted a user to edit the hour-component of a time value. A view for that could look
 something like this:
