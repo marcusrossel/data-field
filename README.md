@@ -138,7 +138,7 @@ variable. We then use that state variable's value to determine whether or not a 
 shown below the text field. Note that this hint will only ever show *while* the data field is being
 edited.
 
-### Safe Field
+### Safe Fields
 
 For the examples above to work *well*, we have to be sure that we have full control over the binding
 that we pass into the data field. That is, even if the value of the binding is set to something that

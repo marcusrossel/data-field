@@ -78,12 +78,14 @@ extension DataField {
             TextField(title, text: text) { isEditing in
                 self.isEditing = isEditing
                 
-                // When editing starts, the buffer has to be updated to represent the latest data.
+                // When editing starts, the buffer has to be updated to represent the latest data
+                // and the invalid text has to be updated accordingly.
                 // When editing editing ends, the latest data has to be set if there is any, and the
                 // invalid text has to be declared gone (because there can be none while not
                 // editing).
                 if isEditing {
                     buffer = dataToText(latest)
+                    invalidText?(textToData(buffer) == nil ? buffer : nil)
                 } else {
                     if let data = cache { latest = data }
                     invalidText?(nil)
