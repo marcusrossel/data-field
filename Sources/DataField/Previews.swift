@@ -110,31 +110,6 @@ struct DataField_Previews: PreviewProvider {
         }
     }
     
-    private struct SafeInvalidTextStringPreview: View {
-    
-        @State private var data: String? = nil
-        @State private var invalidText: String?
-    
-        var body: some View {
-            VStack {
-                DataField("Safe Invalid Text String", initialData: data) {
-                    $0.count > 5
-                } dataToText: {
-                    $0 ?? ""
-                } sink: {
-                    data = $0
-                } invalidText: {
-                    invalidText = $0
-                }
-                
-                if let invalidText = invalidText {
-                    Text("'\(invalidText)' is not an integer greater than 10!")
-                        .foregroundColor(.red)
-                }
-            }
-        }
-    }
-    
     static var previews: some View {
         Form {
             Section(header: Text("Integers").font(.headline)) {
@@ -160,10 +135,6 @@ struct DataField_Previews: PreviewProvider {
                 HStack {
                     Text("Invalid Text: ")
                     InvalidTextStringPreview()
-                }
-                HStack {
-                    Text("Safe Invalid Text: ")
-                    SafeInvalidTextStringPreview()
                 }
             }
         }

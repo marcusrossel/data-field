@@ -42,6 +42,24 @@ public struct DataField<Data>: View {
             return nil
         }
     }
+    
+    init(
+        _ title: String,
+        initialData: Data? = nil,
+        textToData: @escaping (String) -> Data?,
+        dataToText: @escaping (Data?) -> String,
+        sink: @escaping (Data) -> Void,
+        invalidText: ((String?) -> Void)? = nil
+    ) {
+        self.view = AnyView(Safe(
+            title,
+            initialData: initialData,
+            textToData: textToData,
+            dataToText: dataToText,
+            sink: sink,
+            invalidText: invalidText
+        ))
+    }
 }
 
 // MARK: - Constrained Text Field
@@ -65,31 +83,5 @@ extension DataField where Data == String {
         )
     }
 }
-    
-// MARK: - Safe Constrained Text Field
-
-/*extension DataField where Data == String? {
-    
-    public typealias Safe = String
-    
-    public init(
-        _ title: String,
-        initialData: Safe? = nil,
-        constraint: @escaping (Safe) -> Bool,
-        dataToText: @escaping (Safe?) -> String,
-        sink: @escaping (Safe) -> Void,
-        invalidText: ((String?) -> Void)? = nil
-    ) {
-        self.init(
-            title,
-            initialData: initialData,
-            // The retrieving function passes the string along only if it meets the constraint.
-            textToData: { constraint($0) ? $0 : nil },
-            dataToText: dataToText,
-            sink: sink,
-            invalidText: invalidText
-        )
-    }
-}*/
 
 #endif /*canImport(SwiftUI)*/
