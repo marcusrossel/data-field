@@ -1,16 +1,21 @@
 //
 //  DataField.Safe.swift
 //  
-//
 //  Created by Marcus Rossel on 28.09.20.
 //
 
 #if canImport(SwiftUI)
-
 import SwiftUI
+
+// MARK: - Safe Data Field
 
 extension DataField {
     
+    /// A `DataField.Safe` is one of the views that can represent a `DataField`.
+    /// Its "safety" is given by the fact that it does not operate upon a binding to the data, but
+    /// rather passes all of its valid data into a `sink` closure. It can therefore be assured that
+    /// the only data ever shown by the data field are valid data values (if no initial value is
+    /// given `nil` may also be shown).
     struct Safe<Data>: View {
         
         /// The title of the text view, describing its purpose.
@@ -55,7 +60,8 @@ extension DataField {
         /// This binding performs some of the important steps necessary for the behavior of the data
         /// field:
         /// * get: chooses whether the buffer or latest data should be shown by the text field
-        /// * set: observes changes to the buffer and updates the `invalidText` accordingly
+        /// * set: observes changes to the buffer, caches the data-analog and updates the
+        ///        `invalidText` accordingly
         private var text: Binding<String> {
             Binding(
                 get: { isEditing ? buffer : dataToText(latest) },
@@ -68,10 +74,14 @@ extension DataField {
         }
      
         /// A data field is made up of just a single text field.
-        var body: TextField<Text> {
+        var body: some View {
             TextField(title, text: text) { isEditing in
                 self.isEditing = isEditing
                 
+                // When editing starts, the buffer has to be updated to represent the latest data.
+                // When editing editing ends, the latest data has to be set if there is any, and the
+                // invalid text has to be declared gone (because there can be none while not
+                // editing).
                 if isEditing {
                     buffer = dataToText(latest)
                 } else {
@@ -81,6 +91,25 @@ extension DataField {
             }
         }
         
+        /// Creates a safe data field.
+        ///
+        /// - Parameters:
+        /// * `title`: The title of the text view, describing its purpose.
+        /// * `initialData`: An initial data value to be shown when the data field has not yet had
+        ///                  other valid data committed to it. If the given value does not meet the
+        ///                  requirements given by `textToData`, it will be treated as a `nil`
+        ///                  value. Since this value is optional, you also have to handle `nil` in
+        ///                  `dataToText`.
+        /// * `textToData`: A conversion function from a `String` to a `Data` value. If there is no
+        ///                 sensible conversion, return `nil` to indicate that the text is not valid
+        ///                 data.
+        /// * `dataToText`: A conversion function from a `Data?` to a `String` value. This is
+        ///                 directly responsible for the representation of the data values in the
+        ///                 data field.
+        /// * `sink`: A sink for any valid data values that are committed to the data field.
+        /// * `invalidText`: A hook into the data field, to observe any text values that do not
+        ///                  correspond to valid data. When the data field stops editing, a `nil` value
+        ///                  is always passed.
         init(
             _ title: String,
             initialData: Data? = nil,

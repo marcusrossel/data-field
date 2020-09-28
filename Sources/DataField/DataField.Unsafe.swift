@@ -1,25 +1,30 @@
 //
 //  DataField.Unsafe.swift
 //  
-//
 //  Created by Marcus Rossel on 28.09.20.
 //
 
 #if canImport(SwiftUI)
-
 import SwiftUI
+
+// MARK: - Unsafe Data Field
 
 extension DataField {
     
+    /// A `DataField.Unsafe` is one of the views that can represent a `DataField`.
+    /// Its "unsafety" arises from the fact that it operates upon a binding to the data, which could
+    /// be set from outside of the view at any time. It can therefore only be assured that at time
+    /// of data entry no invalid values will be committed to the binding. The data field *will* show
+    /// invalid values though if they are set externally.
     struct Unsafe<Data>: View {
         
         /// The title of the text view, describing its purpose.
         private let title: String
         
         /// The underlying data that should *actually* be manipulated.
-        /// When not being edited, the text field presents this data as a string with the help of a
+        /// When not being edited, the data field presents this data as a string with the help of a
         /// given `dataToText` function.
-        /// When being actively edited, the text field does not show a representation of this data,
+        /// When being actively edited, the data field does not show a representation of this data,
         /// but rather its own transient `buffer`.
         /// If editing ends in a state where `textToData` can successfully decode the `buffer` into
         /// `Data`, this property is updated with that decoded value.
@@ -57,7 +62,8 @@ extension DataField {
         /// This binding performs some of the important steps necessary for the behavior of the data
         /// field:
         /// * get: chooses whether the buffer or underlying data should be shown by the text field
-        /// * set: observes changes to the buffer and updates the `invalidText` accordingly
+        /// * set: observes changes to the buffer, caches the data-analog and updates the
+        ///        `invalidText` accordingly
         private var text: Binding<String> {
             Binding(
                 get: { isEditing ? buffer : dataToText(data) },
@@ -70,10 +76,14 @@ extension DataField {
         }
         
         /// A data field is made up of just a single text field.
-        var body: TextField<Text> {
+        var body: some View {
             TextField(title, text: text) { isEditing in
                 self.isEditing = isEditing
                 
+                // When editing starts, the buffer has to be updated to represent the current data.
+                // When editing editing ends, the data has to be set if there is any, and the
+                // invalid text has to be declared gone (because there can be none while not
+                // editing).
                 if isEditing {
                     buffer = dataToText(data)
                 } else {
@@ -83,7 +93,22 @@ extension DataField {
             }
         }
         
-        init?(
+        /// Creates an unsafe data field.
+        ///
+        /// - Parameters:
+        /// * `title`: The title of the text view, describing its purpose.
+        /// * `data`: The underlying data that should be set by the data field. When not editing, the
+        ///           data field will reflect *any* values written to this binding.
+        /// * `textToData`: A conversion function from a `String` to a `Data` value. If there is no
+        ///                 sensible conversion, return `nil` to indicate that the text is not valid
+        ///                 data.
+        /// * `dataToText`: A conversion function from a `Data` to a `String` value. This is
+        ///                 directly responsible for the representation of the data values in the
+        ///                 data field.
+        /// * `invalidText`: An hook into the data field, to observe any text values that do not
+        ///                  correspond to valid data. When the data field stops editing, a `nil` value
+        ///                  is always passed.
+        init(
             _ title: String,
             data: Binding<Data>,
             textToData: @escaping (String) -> Data?,
@@ -97,8 +122,6 @@ extension DataField {
             self.invalidText = invalidText
             
             _buffer = State(initialValue: dataToText(data.wrappedValue))
-            
-            guard textToData(buffer) != nil else { return nil }
         }
     }
 }
