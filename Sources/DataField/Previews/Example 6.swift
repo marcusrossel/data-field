@@ -1,14 +1,13 @@
 //
-//  Example 5.swift
+//  Example 6.swift
 //
 //  Created by Marcus Rossel on 28.09.20.
 //
 
-#if DEBUG && canImport(DataField)
-import DataField
+#if DEBUG && canImport(SwiftUI)
 import SwiftUI
 
-struct Example_5: PreviewProvider {
+struct Example_6: PreviewProvider {
     
     struct NameView: View {
 
@@ -30,4 +29,4 @@ struct Example_5: PreviewProvider {
     }
 }
 
-#endif /*DEBUG && canImport(DataField)*/
+#endif /*DEBUG && canImport(SwiftUI)*/

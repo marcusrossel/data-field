@@ -45,6 +45,11 @@ extension DataField {
         /// A function that can turn values of the underlying data into string representations.
         private let dataToText: (Data) -> String
         
+        /// A function that can turn values of the underlying data into string representations, used
+        /// only when `isEditing == true`. If this function is not specified or
+        /// `isEditing == false`, the `dataToText` function is used for conversion.
+        private let editableText: ((Data) -> String)?
+        
         /// An optional hook into the text field, to observe any buffer values that are not decodable
         /// into a `Data` value.
         /// If the buffer contains invalid data, its text is passed.
@@ -86,7 +91,7 @@ extension DataField {
                 // invalid text has to be declared gone (because there can be none while not
                 // editing).
                 if isEditing {
-                    buffer = dataToText(data)
+                    buffer = (editableText ?? dataToText)(data)
                     invalidText?(textToData(buffer) == nil ? buffer : nil)
                 } else {
                     if let data = cache { self.data = data }
@@ -95,32 +100,49 @@ extension DataField {
             }
         }
         
-        /// Creates an unsafe data field.
+        /// Creates an data field to act upon a given binding.
         ///
         /// - Parameters:
-        /// * `title`: The title of the text view, describing its purpose.
-        /// * `data`: The underlying data that should be set by the data field. When not editing, the
-        ///           data field will reflect *any* values written to this binding.
-        /// * `textToData`: A conversion function from a `String` to a `Data` value. If there is no
+        ///
+        ///   - title: The title of the text view, describing its purpose.
+        ///
+        ///   - data: The underlying data that should be set by the data field. When not editing,
+        ///           the data field will reflect *any* values written to this binding.
+        ///
+        ///   - textToData: A conversion function from a `String` to a `Data` value. If there is no
         ///                 sensible conversion, return `nil` to indicate that the text is not valid
         ///                 data.
-        /// * `dataToText`: A conversion function from a `Data` to a `String` value. This is
+        ///
+        ///   - dataToText: A conversion function from a `Data?` to a `String` value. This is
         ///                 directly responsible for the representation of the data values in the
         ///                 data field.
-        /// * `invalidText`: An hook into the data field, to observe any text values that do not
-        ///                  correspond to valid data. When the data field stops editing, a `nil` value
-        ///                  is always passed.
+        ///
+        ///   - editableText: An optional conversion function from a `Data` to a `String` value for
+        ///                   finer grained control. It is sometimes desirable to have the
+        ///                   representations of data be different when a user is editing it vs.
+        ///                   when the data field is not being edited. In that case you can specify
+        ///                   the editable version of the text with this closure and the
+        ///                   non-editable version with `dataToText`.
+        ///                   An example use case could be to show grouping-seperators of a number
+        ///                   when not editing (`1.234.000`) but remove them when editing
+        ///                   (`1234000`).
+        ///
+        ///   - invalidText: A hook into the data field, to observe any text values that do not
+        ///                  correspond to valid data. When the data field stops editing, a `nil`
+        ///                  value is always passed.
         init(
             _ title: String,
             data: Binding<Data>,
             textToData: @escaping (String) -> Data?,
             dataToText: @escaping (Data) -> String,
+            editableText: ((Data) -> String)?,
             invalidText: ((String?) -> Void)?
         ) {
             self.title = title
             self._data = data
             self.textToData = textToData
             self.dataToText = dataToText
+            self.editableText = editableText
             self.invalidText = invalidText
             
             _buffer = State(initialValue: dataToText(data.wrappedValue))

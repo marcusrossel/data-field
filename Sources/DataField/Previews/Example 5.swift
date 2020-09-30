@@ -1,14 +1,13 @@
 //
-//  Example 4.swift
+//  Example 5.swift
 //
 //  Created by Marcus Rossel on 28.09.20.
 //
 
-#if DEBUG && canImport(DataField)
-import DataField
+#if DEBUG && canImport(SwiftUI)
 import SwiftUI
 
-struct Example_4: PreviewProvider {
+struct Example_5: PreviewProvider {
     
     struct HourView: View {
 
@@ -42,4 +41,4 @@ struct Example_4: PreviewProvider {
     }
 }
 
-#endif /*DEBUG && canImport(DataField)*/
+#endif /*DEBUG && canImport(SwiftUI)*/

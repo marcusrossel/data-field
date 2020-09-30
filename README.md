@@ -35,7 +35,7 @@ let package = Package(
 ## Usage
 
 > *All of the examples below are numbered and can be viewed as* SwiftUI Previews *in the
-> repository's `Examples` directory.*
+> repository's `Sources > DataField > Previews` directory.*
 
 Let's say we wanted a user to edit the hour-component of a time value. A view for that could look
 something like this:
@@ -138,6 +138,44 @@ variable. We then use that state variable's value to determine whether or not a 
 shown below the text field. Note that this hint will only ever show *while* the data field is being
 edited.
 
+If we want to be even more specific about how data is shown, `DataField` has one tool we can use.
+We can specify different formats for our data depending on whether the field is actively being
+edited or not.
+E.g. let's say we wanted to format the hour values as `<hour>:00h`, but when the user starts
+editing, all they should see is `XX`. We can achieve this as follows:
+
+```swift
+// Example 4
+
+struct HourView: View {
+
+    @State var hour = 10
+    @State var textIsInvalid = false
+
+    var body: some View {
+        VStack {
+            DataField("Hour", data: $hour) { text in
+                guard let validHour = Int(text), (0..<24).contains(validHour) else { return nil }
+                return validHour
+            } dataToText: { data in
+                "\(data):00h"
+            } editableText: { data in
+                "\(data)"
+            } invalidText: { text in
+                textIsInvalid = (text != nil)
+            }
+
+            if textIsInvalid {
+                Text("Please enter a number between 0 and 23!")
+            }
+        }
+    }
+}
+```
+
+When an `editableText` closure is passed, it is used to represent the data when the data field is in
+edit mode. When it is not in edit mode the `dataToText` closure is used as usual.
+
 ### Safe Fields
 
 For the examples above to work *well*, we have to be sure that we have full control over the binding
@@ -150,7 +188,7 @@ initialize a data field by passing it a `sink` closure, which will receive any v
 committed to the data field:
 
 ```swift
-// Example 4
+// Example 5
 
 struct HourView: View {
 
@@ -183,7 +221,7 @@ redundant when working with `String` data, they can be replaced by a `constraint
 returns a `Bool` indicating whether or not a given `String` is considered *valid*:
 
 ```swift
-// Example 5
+// Example 6
 
 struct NameView: View {
 

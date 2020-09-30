@@ -4,8 +4,7 @@
 //  Created by Marcus Rossel on 28.09.20.
 //
 
-#if DEBUG && canImport(DataField)
-import DataField
+#if DEBUG && canImport(SwiftUI)
 import SwiftUI
 
 struct Example_2: PreviewProvider {
@@ -31,4 +30,4 @@ struct Example_2: PreviewProvider {
     }
 }
 
-#endif /*DEBUG && canImport(DataField)*/
+#endif /*DEBUG && canImport(SwiftUI)*/

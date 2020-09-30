@@ -43,6 +43,11 @@ extension DataField {
         /// string representations.
         private let dataToText: (Data?) -> String
         
+        /// A function that can turn values of the underlying data into string representations, used
+        /// only when `isEditing == true`. If this function is not specified or
+        /// `isEditing == false`, the `dataToText` function is used for conversion.
+        private let editableText: ((Data?) -> String)?
+        
         /// An optional hook into the text field, to observe any buffer values that are not
         /// decodable into a `Data` value.
         /// If the buffer contains invalid data, its text is passed.
@@ -84,8 +89,8 @@ extension DataField {
                 // invalid text has to be declared gone (because there can be none while not
                 // editing).
                 if isEditing {
-                    buffer = dataToText(latest)
-                    invalidText?(textToData(buffer) == nil ? buffer : nil)
+                    buffer = (editableText ?? dataToText)(latest)
+                    invalidText?(latest == nil ? buffer : nil)
                 } else {
                     if let data = cache { latest = data }
                     invalidText?(nil)
@@ -93,36 +98,54 @@ extension DataField {
             }
         }
         
-        /// Creates a safe data field.
+        /// Creates an data field that emits valid data values into a given sink.
         ///
         /// - Parameters:
-        /// * `title`: The title of the text view, describing its purpose.
-        /// * `initialData`: An initial data value to be shown when the data field has not yet had
+        ///
+        ///   - title: The title of the text view, describing its purpose.
+        ///
+        ///   - initialData: An initial data value to be shown when the data field has not yet had
         ///                  other valid data committed to it. If the given value does not meet the
         ///                  requirements given by `textToData`, it will be treated as a `nil`
         ///                  value. Since this value is optional, you also have to handle `nil` in
-        ///                  `dataToText`.
-        /// * `textToData`: A conversion function from a `String` to a `Data` value. If there is no
+        ///                  `dataToText` and `editableText`.
+        ///
+        ///   - textToData: A conversion function from a `String` to a `Data` value. If there is no
         ///                 sensible conversion, return `nil` to indicate that the text is not valid
         ///                 data.
-        /// * `dataToText`: A conversion function from a `Data?` to a `String` value. This is
+        ///
+        ///   - dataToText: A conversion function from a `Data?` to a `String` value. This is
         ///                 directly responsible for the representation of the data values in the
         ///                 data field.
-        /// * `sink`: A sink for any valid data values that are committed to the data field.
-        /// * `invalidText`: A hook into the data field, to observe any text values that do not
-        ///                  correspond to valid data. When the data field stops editing, a `nil` value
-        ///                  is always passed.
+        ///
+        ///   - editableText: An optional conversion function from a `Data` to a `String` value for
+        ///                   finer grained control. It is sometimes desirable to have the
+        ///                   representations of data be different when a user is editing it vs.
+        ///                   when the data field is not being edited. In that case you can specify
+        ///                   the editable version of the text with this closure and the
+        ///                   non-editable version with `dataToText`.
+        ///                   An example use case could be to show grouping-seperators of a number
+        ///                   when not editing (`1.234.000`) but remove them when editing
+        ///                   (`1234000`).
+        ///
+        ///   - sink: A sink for any valid data values that are committed to the data field.
+        ///
+        ///   - invalidText: A hook into the data field, to observe any text values that do not
+        ///                  correspond to valid data. When the data field stops editing, a `nil`
+        ///                  value is always passed.
         init(
             _ title: String,
             initialData: Data? = nil,
             textToData: @escaping (String) -> Data?,
             dataToText: @escaping (Data?) -> String,
+            editableText: ((Data?) -> String)?,
             sink: @escaping (Data) -> Void,
             invalidText: ((String?) -> Void)?
         ) {
             self.title = title
             self.textToData = textToData
             self.dataToText = dataToText
+            self.editableText = editableText
             self.sink = sink
             self.invalidText = invalidText
             
