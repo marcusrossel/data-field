@@ -16,7 +16,7 @@ extension DataField {
     /// rather passes all of its valid data into a `sink` closure. It can therefore be assured that
     /// the only data ever shown by the data field are valid data values (if no initial value is
     /// given `nil` may also be shown).
-    struct Safe<Data>: View {
+    internal struct Safe<Data>: View {
         
         /// The title of the text view, describing its purpose.
         private let title: String
@@ -79,7 +79,7 @@ extension DataField {
         }
      
         /// A data field is made up of just a single text field.
-        var body: some View {
+        internal var body: some View {
             TextField(title, text: text) { isEditing in
                 self.isEditing = isEditing
                 
@@ -136,7 +136,7 @@ extension DataField {
         ///   - invalidText: A hook into the data field, to observe any text values that do not
         ///                  correspond to valid data. When the data field stops editing, a `nil`
         ///                  value is always passed.
-        init(
+        internal init(
             _ title: String,
             initialData: Data? = nil,
             textToData: @escaping (String) -> Data?,

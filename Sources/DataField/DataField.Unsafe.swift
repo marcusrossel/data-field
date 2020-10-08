@@ -16,7 +16,7 @@ extension DataField {
     /// be set from outside of the view at any time. It can therefore only be assured that at time
     /// of data entry no invalid values will be committed to the binding. The data field *will* show
     /// invalid values though if they are set externally.
-    struct Unsafe<Data>: View {
+    internal struct Unsafe<Data>: View {
         
         /// The title of the text view, describing its purpose.
         private let title: String
@@ -81,7 +81,7 @@ extension DataField {
         }
         
         /// A data field is made up of just a single text field.
-        var body: some View {
+        internal var body: some View {
             TextField(title, text: text) { isEditing in
                 self.isEditing = isEditing
                 
@@ -113,7 +113,7 @@ extension DataField {
         ///                 sensible conversion, return `nil` to indicate that the text is not valid
         ///                 data.
         ///
-        ///   - dataToText: A conversion function from a `Data?` to a `String` value. This is
+        ///   - dataToText: A conversion function from a `Data` to a `String` value. This is
         ///                 directly responsible for the representation of the data values in the
         ///                 data field.
         ///
@@ -130,7 +130,7 @@ extension DataField {
         ///   - invalidText: A hook into the data field, to observe any text values that do not
         ///                  correspond to valid data. When the data field stops editing, a `nil`
         ///                  value is always passed.
-        init(
+        internal init(
             _ title: String,
             data: Binding<Data>,
             textToData: @escaping (String) -> Data?,
@@ -149,5 +149,7 @@ extension DataField {
         }
     }
 }
+
+
 
 #endif /*canImport(SwiftUI)*/

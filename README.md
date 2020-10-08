@@ -239,8 +239,8 @@ struct NameView: View {
 }
 ```
 
-When working with data that is `CustomStringConvertible` **and** `LosslessStringConvertible`, we can
-simply drop the conversion closures:
+When working with data that is `CustomStringConvertible` or `LosslessStringConvertible`, we can
+simply drop the corresponding conversion closures if we want to:
 
 ```swift
 // Example 7
@@ -265,7 +265,3 @@ struct CoinView: View {
     }
 }
 ```
-
-This approach to using a `DataField` can be convient when you want to extract the logic of
-converting to and from strings into a seperate scope. E.g. `CoinSide` could implement complex
-conversion logic in its `description` and `init?(_:)` - neatly seperated from the view's `body`.
