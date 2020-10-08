@@ -85,14 +85,17 @@ extension DataField {
                 
                 // When editing starts, the buffer has to be updated to represent the latest data
                 // and the invalid text has to be updated accordingly.
-                // When editing editing ends, the latest data has to be set if there is any, and the
-                // invalid text has to be declared gone (because there can be none while not
-                // editing).
+                // When editing editing ends, the latest data has to be set and sunk (if there is
+                // any) and the invalid text has to be declared gone (because there can be none
+                // while not editing).
                 if isEditing {
                     buffer = (editableText ?? dataToText)(latest)
                     invalidText?(latest == nil ? buffer : nil)
                 } else {
-                    if let data = cache { latest = data }
+                    if let data = cache {
+                        sink(data)
+                        latest = data
+                    }
                     invalidText?(nil)
                 }
             }
