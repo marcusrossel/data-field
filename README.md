@@ -25,7 +25,7 @@ let package = Package(
     // ...
 
     dependencies: [
-        .package(url: "https://github.com/marcusrossel/data-field.git", from: "0.1.0")
+        .package(url: "https://github.com/marcusrossel/data-field.git", from: "0.3.0")
     ],
 
     // ...
@@ -214,11 +214,13 @@ The main downside of this approach is that it's less convenient than just passin
 especially if you *know* that the value won't be changed from the outside. But in the example above
 the binding comes from *outside* of the view, so we don't know who else might write to it.
 
-### `String`-based Fields
+### String-Convertible Data
 
-`DataField` has some affordances for using `String` data. Since `dataToText` and `textToData` are
-redundant when working with `String` data, they can be replaced by a `constraint` closure, which
-returns a `Bool` indicating whether or not a given `String` is considered *valid*:
+`DataField` has some affordances for using `String` and `String`-convertible data. Since `dataToText` and
+`textToData` are redundant in those cases, there are some special initialzers for `DataField`.
+
+When working with `String` data, we can pass a `constraint` closure, which returns a `Bool` indicating whether
+or not a given `String` is considered *valid*:
 
 ```swift
 // Example 6
@@ -236,3 +238,34 @@ struct NameView: View {
     }
 }
 ```
+
+When working with data that is `CustomStringConvertible` **and** `LosslessStringConvertible`, we can
+simply drop the conversion closures:
+
+```swift
+// Example 7
+
+enum CoinSide: String, CustomStringConvertible, LosslessStringConvertible {
+
+    case heads
+    case tails
+
+    var description: String { rawValue }
+    init?(_ string: String) { self.init(rawValue: string) }
+}
+
+struct CoinView: View {
+
+    @State var coinSide: CoinSide = .heads
+
+    var body: some View {
+        VStack {
+            DataField("Coin Side", data: $coinSide)
+        }
+    }
+}
+```
+
+This approach to using a `DataField` can be convient when you want to extract the logic of
+converting to and from strings into a seperate scope. E.g. `CoinSide` could implement complex
+conversion logic in its `description` and `init?(_:)` - neatly seperated from the view's `body`.

@@ -100,7 +100,7 @@ extension DataField {
             }
         }
         
-        /// Creates an data field to act upon a given binding.
+        /// Creates a data field to act upon a given binding.
         ///
         /// - Parameters:
         ///

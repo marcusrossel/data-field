@@ -29,7 +29,7 @@ public struct DataField<Data>: View {
         view
     }
     
-    /// Creates an data field to act upon a given binding.
+    /// Creates a data field to act upon a given binding.
     ///
     /// - Parameters:
     ///
@@ -75,7 +75,7 @@ public struct DataField<Data>: View {
         ))
     }
     
-    /// Creates an data field that emits valid data values into a given sink.
+    /// Creates a data field that emits valid data values into a given sink.
     ///
     /// - Parameters:
     ///
@@ -129,11 +129,42 @@ public struct DataField<Data>: View {
     }
 }
 
+// MARK: - Convertible Data Field
+
+extension DataField where Data: CustomStringConvertible & LosslessStringConvertible {
+    
+    /// Creates a data field to act upon a given binding of bidirectionally string-convertible data.
+    /// This is a convenience initializer over `init(_:data:textToData:dataToText:invalidText)`.
+    ///
+    /// - Parameters:
+    ///
+    ///   - title: The title of the text view, describing its purpose.
+    ///
+    ///   - data: The underlying data that should be set by the data field. When not editing, the
+    ///           data field will reflect *any* values written to this binding.
+    ///
+    ///   - invalidText: A hook into the data field, to observe any text values that do not
+    ///                  correspond to valid data. When the data field stops editing, a `nil` value
+    ///                  is always passed.
+    public init(_ title: String, data: Binding<Data>, invalidText: ((String?) -> Void)? = nil) {
+        self.init(
+            title,
+            data: data,
+            // The text-to-data function uses the `LosslessStringConvertible` initializer.
+            textToData: { Data($0) },
+            // The data-to-text function uses the `CustomStringConvertible` description.
+            dataToText: { $0.description },
+            invalidText: invalidText
+        )
+    }
+    
+}
+
 // MARK: - Constrained Text Field
 
 extension DataField where Data == String {
     
-    /// Creates an data field to act upon a given string binding. This is a convenience initializer
+    /// Creates a data field to act upon a given string binding. This is a convenience initializer
     /// over `init(_:data:textToData:dataToText:invalidText)`, when working with `String` data.
     ///
     /// - Parameters:
@@ -158,9 +189,9 @@ extension DataField where Data == String {
         self.init(
             title,
             data: data,
-            // The retrieving function passes the string along only if it meets the constraint.
+            // The text-to-data function passes the string along only if it meets the constraint.
             textToData: { constraint($0) ? $0 : nil },
-            // The display function is trivially the identity function on the string.
+            // The data-to-text function is trivially the identity function on the string.
             dataToText: { $0 },
             invalidText: invalidText
         )

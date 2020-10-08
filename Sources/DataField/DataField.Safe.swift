@@ -101,7 +101,7 @@ extension DataField {
             }
         }
         
-        /// Creates an data field that emits valid data values into a given sink.
+        /// Creates a data field that emits valid data values into a given sink.
         ///
         /// - Parameters:
         ///
