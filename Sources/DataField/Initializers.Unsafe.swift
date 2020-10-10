@@ -191,54 +191,6 @@ extension DataField where Data: LosslessStringConvertible {
             data: data,
             // The text-to-data function uses the `LosslessStringConvertible` initializer.
             textToData: { Data($0) },
-            dataToText: dataToText,
-            editableText: editableText,
-            invalidText: invalidText
-        )
-    }
-}
-
-// MARK: - String Convertible Data Field
-
-extension DataField where Data: CustomStringConvertible & LosslessStringConvertible {
-    
-    /// Creates a data field to act upon a given binding of bidirectionally string-convertible data.
-    /// This is a convenience initializer over
-    /// `init(_:data:textToData:dataToText:editableText:invalidText)`.
-    ///
-    /// - Parameters:
-    ///
-    ///   - title: The title of the text view, describing its purpose.
-    ///
-    ///   - data: The underlying data that should be set by the data field. When not editing, the
-    ///           data field will reflect *any* values written to this binding.
-    ///
-    ///   - dataToText: A conversion function from a `Data` to a `String` value. This is directly
-    ///                 responsible for the representation of the data values in the data field.
-    ///
-    ///   - editableText: An optional conversion function from a `Data` to a `String` value for
-    ///                   finer grained control. It is sometimes desirable to have the
-    ///                   representations of data be different when a user is editing it vs. when
-    ///                   the data field is not being edited. In that case you can specify the
-    ///                   editable version of the text with this closure and the non-editable
-    ///                   version with `dataToText`.
-    ///                   An example use case could be to show grouping-seperators of a number when
-    ///                   not editing (`1.234.000`) but remove them when editing (`1234000`).
-    ///
-    ///   - invalidText: A hook into the data field, to observe any text values that do not
-    ///                  correspond to valid data. When the data field stops editing, a `nil` value
-    ///                  is always passed.
-    public init(
-        _ title: String,
-        data: Binding<Data>,
-        editableText: ((Data) -> String)? = nil,
-        invalidText: ((String?) -> Void)? = nil
-    ) {
-        self.init(
-            title,
-            data: data,
-            // The text-to-data function uses the `LosslessStringConvertible` initializer.
-            textToData: { Data($0) },
             // The data-to-text function uses the `CustomStringConvertible` description.
             dataToText: { $0.description },
             editableText: editableText,

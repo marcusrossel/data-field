@@ -242,10 +242,12 @@ struct NameView: View {
 When working with data that is `CustomStringConvertible` or `LosslessStringConvertible`, we can
 simply drop the corresponding conversion closures if we want to:
 
+> *Note*: `LosslessStringConvertible` implies conformance to `CustomStringConvertible`. 
+
 ```swift
 // Example 7
 
-enum CoinSide: String, CustomStringConvertible, LosslessStringConvertible {
+enum CoinSide: String, LosslessStringConvertible {
 
     case heads
     case tails
