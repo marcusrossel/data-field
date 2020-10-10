@@ -164,9 +164,6 @@ extension DataField where Data: LosslessStringConvertible {
     ///   - data: The underlying data that should be set by the data field. When not editing, the
     ///           data field will reflect *any* values written to this binding.
     ///
-    ///   - dataToText: A conversion function from a `Data` to a `String` value. This is directly
-    ///                 responsible for the representation of the data values in the data field.
-    ///
     ///   - editableText: An optional conversion function from a `Data` to a `String` value for
     ///                   finer grained control. It is sometimes desirable to have the
     ///                   representations of data be different when a user is editing it vs. when
@@ -182,7 +179,6 @@ extension DataField where Data: LosslessStringConvertible {
     public init(
         _ title: String,
         data: Binding<Data>,
-        dataToText: @escaping (Data) -> String,
         editableText: ((Data) -> String)? = nil,
         invalidText: ((String?) -> Void)? = nil
     ) {
