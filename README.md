@@ -1,5 +1,9 @@
 # 🔏 Data Field
 
+![SwiftUI iOS 14](https://img.shields.io/badge/SwiftUI-iOS_14-blue?style=flat)
+![SPM Compatible](https://img.shields.io/badge/SPM-compatible-orange?style=flat)
+![Release Version](https://img.shields.io/github/v/tag/marcusrossel/data-field?color=green&include_prereleases&label=release&sort=semver)
+
 A SwiftUI view that wraps a `TextField` to only accept specific data.
 
 ## Motivation
