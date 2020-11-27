@@ -29,7 +29,7 @@ let package = Package(
     // ...
 
     dependencies: [
-        .package(url: "https://github.com/marcusrossel/data-field.git", from: "0.3.0")
+        .package(url: "https://github.com/marcusrossel/data-field.git", from: "0.3.3")
     ],
 
     // ...
