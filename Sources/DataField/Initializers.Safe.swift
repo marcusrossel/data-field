@@ -24,6 +24,10 @@ extension DataField {
     ///                  Since this value is optional, you also have to handle `nil` in
     ///                  `dataToText` and `editableText`.
     ///
+    ///   - sinkContinuously: An indicator for whether or not *every* valid data value should be
+    ///                       written to `sink`, or just the value available when editing completes.
+    ///                       By default only the last value is written.
+    ///
     ///   - textToData: A conversion function from a `String` to a `Data?` value. If there is no
     ///                 sensible conversion, return `nil` to indicate that the text is not valid
     ///                 data.
@@ -48,6 +52,7 @@ extension DataField {
     public init(
         _ title: String,
         initialData: Data? = nil,
+        sinkContinuously: Bool = false,
         textToData: @escaping (String) -> Data?,
         dataToText: @escaping (Data?) -> String,
         editableText: ((Data?) -> String)? = nil,
@@ -57,6 +62,7 @@ extension DataField {
         let field = Safe(
             title,
             initialData: initialData,
+            sinkContinuously: sinkContinuously,
             textToData: textToData,
             dataToText: dataToText,
             editableText: editableText,

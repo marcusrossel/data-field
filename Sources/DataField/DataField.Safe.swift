@@ -24,6 +24,10 @@ extension DataField {
         /// A container for the last valid data value entered into the text field, if present.
         @State private var latest: Data?
         
+        /// An indicator for whether or not *every* valid data value should be written to `sink`, or
+        /// just the value available when editing completes.
+        private let sinkContinuously: Bool
+        
         /// A sink for any valid data values that are committed by ending an "editing session".
         private let sink: (Data) -> Void
         
@@ -74,6 +78,11 @@ extension DataField {
                     buffer = $0
                     cache = textToData(buffer)
                     invalidText?(cache == nil ? buffer : nil)
+                    
+                    if sinkContinuously, let data = cache {
+                        sink(data)
+                        latest = data
+                    }
                 }
             )
         }
@@ -92,7 +101,7 @@ extension DataField {
                     buffer = (editableText ?? dataToText)(latest)
                     invalidText?(latest == nil ? buffer : nil)
                 } else {
-                    if let data = cache {
+                    if !sinkContinuously, let data = cache {
                         sink(data)
                         latest = data
                     }
@@ -112,6 +121,10 @@ extension DataField {
         ///                  requirements given by `textToData`, it will be treated as a `nil`
         ///                  value. Since this value is optional, you also have to handle `nil` in
         ///                  `dataToText` and `editableText`.
+        ///
+        ///   - sinkContinuously: An indicator for whether or not *every* valid data value should be
+        ///                       written to `sink`, or just the value available when editing
+        ///                       completes. By default only the last value is written.
         ///
         ///   - textToData: A conversion function from a `String` to a `Data` value. If there is no
         ///                 sensible conversion, return `nil` to indicate that the text is not valid
@@ -139,6 +152,7 @@ extension DataField {
         internal init(
             _ title: String,
             initialData: Data? = nil,
+            sinkContinuously: Bool = false,
             textToData: @escaping (String) -> Data?,
             dataToText: @escaping (Data?) -> String,
             editableText: ((Data?) -> String)?,
@@ -149,6 +163,7 @@ extension DataField {
             self.textToData = textToData
             self.dataToText = dataToText
             self.editableText = editableText
+            self.sinkContinuously = sinkContinuously
             self.sink = sink
             self.invalidText = invalidText
             

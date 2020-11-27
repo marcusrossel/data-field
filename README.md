@@ -214,6 +214,9 @@ The main downside of this approach is that it's less convenient than just passin
 especially if you *know* that the value won't be changed from the outside. But in the example above
 the binding comes from *outside* of the view, so we don't know who else might write to it.
 
+If you want the `sink` to receive *all* valid data values produced while the data field is being edited, you specify
+an addition `sinkContinuously` parameter. This is set to `false` by default.
+
 ### String-Convertible Data
 
 `DataField` has some affordances for using `String` and `String`-convertible data. Since `dataToText` and
